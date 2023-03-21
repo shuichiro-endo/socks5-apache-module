@@ -1448,6 +1448,9 @@ static int socks5_post_read_request(request_rec *r)
 		if(tv_sec<0 || tv_sec>300 || tv_usec<0 || tv_usec>1000000){
 			tv_sec = 3;
 			tv_usec = 0;
+		}else if(tv_sec==0 && tv_usec==0){
+			tv_sec = 3;
+			tv_usec = 0;
 		}
 #ifdef _DEBUG
 		printf("[I] Timeout tv_sec:%ld sec tv_usec:%ld microsec.\n", tv_sec, tv_usec);
