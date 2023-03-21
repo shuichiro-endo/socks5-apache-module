@@ -5,14 +5,14 @@
 
 int recvData(int sock, void *buffer, int length, long tv_sec, long tv_usec);
 int recvDataTls(int sock, SSL *ssl ,void *buffer, int length, long tv_sec, long tv_usec);
-int sendData(int sock, void *buffer, int length);
-int sendDataTls(SSL *ssl, void *buffer, int length);
+int sendData(int sock, void *buffer, int length, long tv_sec, long tv_usec);
+int sendDataTls(int sock, SSL *ssl, void *buffer, int length, long tv_sec, long tv_usec);
 int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec);
 int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_sec, long tv_usec);
-int sendSocksResponseIpv4(int clientSock, char ver, char req, char rsv, char atyp);
-int sendSocksResponseIpv4Tls(SSL *clientSsl, char ver, char req, char rsv, char atyp);
-int sendSocksResponseIpv6(int clientSock, char ver, char req, char rsv, char atyp);
-int sendSocksResponseIpv6Tls(SSL *clientSsl, char ver, char req, char rsv, char atyp);
+int sendSocksResponseIpv4(int clientSock, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
+int sendSocksResponseIpv4Tls(int clientSock, SSL *clientSsl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
+int sendSocksResponseIpv6(int clientSock, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
+int sendSocksResponseIpv6Tls(int clientSock, SSL *clientSsl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
 int worker(void *ptr);
 
 typedef struct {
