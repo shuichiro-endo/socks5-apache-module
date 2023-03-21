@@ -12,6 +12,7 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -36,35 +37,53 @@
 #define HTTP_REQUEST_HEADER_TLS_KEY "tls"
 #define HTTP_REQUEST_HEADER_TLS_VALUE1 "off"	// Socks5
 #define HTTP_REQUEST_HEADER_TLS_VALUE2 "on"	// Socks5 over TLS
+#define HTTP_REQUEST_HEADER_TVSEC_KEY "sec"	// tv_sec
+#define HTTP_REQUEST_HEADER_TVUSEC_KEY "usec"	// tv_usec
 
 static char authenticationMethod = 0x0;	// 0x0:No Authentication Required	0x2:Username/Password Authentication
 static char username[256] = "socks5user";
 static char password[256] = "supersecretpassword";
 
-long tv_sec = 300;
-long tv_usec = 0;
-
 char cipherSuiteTLS1_2[1000] = "AESGCM+ECDSA:CHACHA20+ECDSA:+AES256";	// TLS1.2
 char cipherSuiteTLS1_3[1000] = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";	// TLS1.3
 
 
-int recvData(int sock, void *buffer, int length)
+int recvData(int sock, void *buffer, int length, long tv_sec, long tv_usec)
 {
 	int rec = 0;
+	fd_set readfds;
+	int nfds = -1;
+	struct timeval tv;
+	bzero(buffer, length+1);
 
 	while(1){
-		rec = recv(sock, buffer, length, 0);	
-		if(rec <= 0){
-			if(errno == EINTR){
-				continue;
-			}else if(errno == EAGAIN){
-				usleep(5000);
-				continue;
-			}else{
-				return -1;
-			}
-		}else{
+		FD_ZERO(&readfds);
+		FD_SET(sock, &readfds);
+		nfds = sock + 1;
+		tv.tv_sec = tv_sec;
+		tv.tv_usec = tv_usec;
+		
+		if(select(nfds, &readfds, NULL, NULL, &tv) == 0){
+#ifdef _DEBUG
+			printf("[I] recvData timeout.\n");
+#endif
 			break;
+		}
+		
+		if(FD_ISSET(sock, &readfds)){
+			rec = recv(sock, buffer, length, 0);
+			if(rec <= 0){
+				if(errno == EINTR){
+					continue;
+				}else if(errno == EAGAIN){
+					usleep(5000);
+					continue;
+				}else{
+					return -1;
+				}
+			}else{
+				break;
+			}
 		}
 	}
 	
@@ -72,28 +91,47 @@ int recvData(int sock, void *buffer, int length)
 }
 
 
-int recvDataTls(SSL *ssl ,void *buffer, int length)
+int recvDataTls(int sock, SSL *ssl ,void *buffer, int length, long tv_sec, long tv_usec)
 {
 	int rec = 0;
 	int err = 0;
+	fd_set readfds;
+	int nfds = -1;
+	struct timeval tv;
+	bzero(buffer, length+1);
 
 	while(1){
-		rec = SSL_read(ssl, buffer, length);
-		err = SSL_get_error(ssl, rec);
+		FD_ZERO(&readfds);
+		FD_SET(sock, &readfds);
+		nfds = sock + 1;
+		tv.tv_sec = tv_sec;
+		tv.tv_usec = tv_usec;
 		
-		if(err == SSL_ERROR_NONE){
-			break;
-		}else if(err == SSL_ERROR_ZERO_RETURN){
-			break;
-		}else if(err == SSL_ERROR_WANT_READ){
-			usleep(5000);
-		}else if(err == SSL_ERROR_WANT_WRITE){
-			usleep(5000);
-		}else{
+		if(select(nfds, &readfds, NULL, NULL, &tv) == 0){
 #ifdef _DEBUG
-			printf("[E] SSL_read error:%d:%s.\n", err, ERR_error_string(ERR_peek_last_error(), NULL));
+			printf("[I] recvDataTls timeout.\n");
 #endif
-			return -2;
+			break;
+		}
+		
+		if(FD_ISSET(sock, &readfds)){
+			rec = SSL_read(ssl, buffer, length);
+			err = SSL_get_error(ssl, rec);
+			
+			if(err == SSL_ERROR_NONE){
+				break;
+			}else if(err == SSL_ERROR_ZERO_RETURN){
+				break;
+			}else if(err == SSL_ERROR_WANT_READ){
+				usleep(5000);
+			}else if(err == SSL_ERROR_WANT_WRITE){
+				usleep(5000);
+			}else{
+#ifdef _DEBUG
+				printf("[E] SSL_read error:%d:%s.\n", err, ERR_error_string(ERR_peek_last_error(), NULL));
+#endif
+				return -2;
+			}
 		}
 	}
 	
@@ -154,7 +192,7 @@ int sendDataTls(SSL *ssl, void *buffer, int length)
 }
 
 
-int forwarder(int clientSock, int targetSock)
+int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 {
 	int rec, sen;
 	fd_set readfds;
@@ -178,7 +216,7 @@ int forwarder(int clientSock, int targetSock)
 			break;
 		}
 						
-		if(FD_ISSET(clientSock, &readfds)){	
+		if(FD_ISSET(clientSock, &readfds)){
 			if((rec = read(clientSock, buffer, BUFSIZ)) > 0){
 				sen = write(targetSock, buffer, rec);
 				if(sen <= 0){
@@ -205,7 +243,7 @@ int forwarder(int clientSock, int targetSock)
 }
 
 
-int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5)
+int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_sec, long tv_usec)
 {
 	int rec, sen;
 	fd_set readfds;
@@ -368,6 +406,8 @@ int worker(void *ptr)
 	int clientSock = pParam->clientSock;
 	SSL *clientSslSocks5 = pParam->clientSslSocks5;
 	int socks5OverTlsFlag = pParam->socks5OverTlsFlag;	// 0:socks5 1:socks5 over tls
+	long tv_sec = pParam->tv_sec;
+	long tv_usec = pParam->tv_usec;
 	
 	char buffer[BUFSIZ+1];
 	bzero(buffer, BUFSIZ+1);
@@ -380,9 +420,9 @@ int worker(void *ptr)
 	printf("[I] Recieving selection request.\n");
 #endif
 	if(socks5OverTlsFlag == 0){	// Socks5
-		rec = recvData(clientSock, buffer, BUFSIZ);
+		rec = recvData(clientSock, buffer, BUFSIZ, tv_sec, tv_usec);
 	}else{	// Socks5 over TLS
-		rec = recvDataTls(clientSslSocks5, buffer, BUFSIZ);
+		rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFSIZ, tv_sec, tv_usec);
 	}
 	if(rec <= 0){
 #ifdef _DEBUG
@@ -444,9 +484,9 @@ int worker(void *ptr)
 		printf("[I] Recieving username password authentication request.\n");
 #endif
 		if(socks5OverTlsFlag == 0){	// Socks5
-			rec = recvData(clientSock, buffer, BUFSIZ);
+			rec = recvData(clientSock, buffer, BUFSIZ, tv_sec, tv_usec);
 		}else{	// Socks5 over TLS
-			rec = recvDataTls(clientSslSocks5, buffer, BUFSIZ);
+			rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFSIZ, tv_sec, tv_usec);
 		}
 		if(rec <= 0){
 #ifdef _DEBUG
@@ -515,9 +555,9 @@ int worker(void *ptr)
 #endif
 	bzero(buffer, BUFSIZ+1);
 	if(socks5OverTlsFlag == 0){	// Socks5
-		rec = recvData(clientSock, buffer, BUFSIZ);
+		rec = recvData(clientSock, buffer, BUFSIZ, tv_sec, tv_usec);
 	}else{	// Socks5 over TLS
-		rec = recvDataTls(clientSslSocks5, buffer, BUFSIZ);
+		rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFSIZ, tv_sec, tv_usec);
 	}
 	if(rec <= 0){
 #ifdef _DEBUG
@@ -1197,9 +1237,9 @@ int worker(void *ptr)
 	printf("[I] Forwarder.\n");
 #endif
 	if(socks5OverTlsFlag == 0){	// Socks5
-		err = forwarder(clientSock, targetSock);
+		err = forwarder(clientSock, targetSock, tv_sec, tv_usec);
 	}else{	// Socks5 over TLS
-		err = forwarderTls(clientSock, targetSock, clientSslSocks5);
+		err = forwarderTls(clientSock, targetSock, clientSslSocks5, tv_sec, tv_usec);
 	}
 	
 #ifdef _DEBUG
@@ -1249,6 +1289,8 @@ static int socks5_post_read_request(request_rec *r)
 	SSL *clientSslSocks5 = NULL;
 	
 	PARAM param;
+	long tv_sec = 3;
+	long tv_usec = 0;
 	SSLPARAM sslParam;
 	sslParam.clientCtxSocks5 = NULL;
 	sslParam.clientSslSocks5 = NULL;
@@ -1264,18 +1306,23 @@ static int socks5_post_read_request(request_rec *r)
 		printf("[I] e[%d].key:%s e[%d].val:%s\n", i, e[i].key, i, e[i].val);
 #endif
 		if(!strncmp(e[i].key, HTTP_REQUEST_HEADER_SOCKS5_KEY, strlen(HTTP_REQUEST_HEADER_SOCKS5_KEY))){
-			if(!strncmp(e[i].val, HTTP_REQUEST_HEADER_SOCKS5_VALUE, strlen(HTTP_REQUEST_HEADER_SOCKS5_VALUE))){	// socks5
+			if(!strncmp(e[i].val, HTTP_REQUEST_HEADER_SOCKS5_VALUE, strlen(HTTP_REQUEST_HEADER_SOCKS5_VALUE)+1)){	// socks5
 				flag = 1;
 			}
-		}else if(!strncmp(e[i].key, HTTP_REQUEST_HEADER_TLS_KEY, strlen(HTTP_REQUEST_HEADER_TLS_KEY))){
-			if(!strncmp(e[i].val, HTTP_REQUEST_HEADER_TLS_VALUE2, strlen(HTTP_REQUEST_HEADER_TLS_VALUE2))){
+		}else if(!strncmp(e[i].key, HTTP_REQUEST_HEADER_TLS_KEY, strlen(HTTP_REQUEST_HEADER_TLS_KEY)+1)){
+			if(!strncmp(e[i].val, HTTP_REQUEST_HEADER_TLS_VALUE2, strlen(HTTP_REQUEST_HEADER_TLS_VALUE2)+1)){
 				socks5OverTlsFlag = 1;	// socks5 over tls
 			}else{
 				socks5OverTlsFlag = 0;	// socks5
 			}
+		}else if(!strncmp(e[i].key, HTTP_REQUEST_HEADER_TVSEC_KEY, strlen(HTTP_REQUEST_HEADER_TVSEC_KEY)+1)){
+			tv_sec = atol(e[i].val);
+		}else if(!strncmp(e[i].key, HTTP_REQUEST_HEADER_TVUSEC_KEY, strlen(HTTP_REQUEST_HEADER_TVUSEC_KEY)+1)){
+			tv_usec = atol(e[i].val);
 		}
 	}
-
+	
+	
 	if(flag == 1){	// socks5
 #ifdef _DEBUG
 		printf("[I] Socks5 start.\n");
@@ -1398,9 +1445,19 @@ static int socks5_post_read_request(request_rec *r)
 #endif
 		}
 		
+		if(tv_sec<0 || tv_sec>300 || tv_usec<0 || tv_usec>1000000){
+			tv_sec = 3;
+			tv_usec = 0;
+		}
+#ifdef _DEBUG
+		printf("[I] Timeout tv_sec:%ld sec tv_usec:%ld microsec.\n", tv_sec, tv_usec);
+#endif
+		
 		param.clientSock = clientSock;
 		param.clientSslSocks5 = clientSslSocks5;
 		param.socks5OverTlsFlag = socks5OverTlsFlag;
+		param.tv_sec = tv_sec;
+		param.tv_usec = tv_usec;
 		
 		ret = worker(&param);
 		

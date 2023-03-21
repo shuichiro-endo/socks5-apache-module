@@ -3,12 +3,12 @@
  * Author: Shuichiro Endo
  */
 
-int recvData(int sock, void *buffer, int length);
-int recvDataTls(SSL *ssl ,void *buffer, int length);
+int recvData(int sock, void *buffer, int length, long tv_sec, long tv_usec);
+int recvDataTls(int sock, SSL *ssl ,void *buffer, int length, long tv_sec, long tv_usec);
 int sendData(int sock, void *buffer, int length);
 int sendDataTls(SSL *ssl, void *buffer, int length);
-int forwarder(int clientSock, int targetSock);
-int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5);
+int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec);
+int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_sec, long tv_usec);
 int sendSocksResponseIpv4(int clientSock, char ver, char req, char rsv, char atyp);
 int sendSocksResponseIpv4Tls(SSL *clientSsl, char ver, char req, char rsv, char atyp);
 int sendSocksResponseIpv6(int clientSock, char ver, char req, char rsv, char atyp);
@@ -19,6 +19,8 @@ typedef struct {
 	int clientSock;
 	SSL *clientSslSocks5;
 	int socks5OverTlsFlag;
+	long tv_sec;
+	long tv_usec;
 } PARAM, *pPARAM;
 
 typedef struct {
