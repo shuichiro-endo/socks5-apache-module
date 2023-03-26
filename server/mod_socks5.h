@@ -19,8 +19,10 @@ typedef struct {
 	int clientSock;
 	SSL *clientSslSocks5;
 	int socks5OverTlsFlag;
-	long tv_sec;
-	long tv_usec;
+	long tv_sec;		// recv send
+	long tv_usec;		// recv send
+	long forwarder_tv_sec;
+	long forwarder_tv_usec;
 } PARAM, *pPARAM;
 
 typedef struct {
