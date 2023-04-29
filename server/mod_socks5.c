@@ -32,6 +32,8 @@
 #include "mod_socks5.h"
 #include "serverkey.h"
 
+#define BUFFER_SIZE 8192
+
 #define HTTP_REQUEST_HEADER_SOCKS5_KEY "socks5"
 #define HTTP_REQUEST_HEADER_SOCKS5_VALUE "socks5"
 #define HTTP_REQUEST_HEADER_TLS_KEY "tls"
@@ -236,8 +238,8 @@ int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 	fd_set readfds;
 	int nfds = -1;
 	struct timeval tv;
-	char buffer[BUFSIZ+1];
-	bzero(buffer, BUFSIZ+1);
+	char buffer[BUFFER_SIZE+1];
+	bzero(buffer, BUFFER_SIZE+1);
 	
 	while(1){
 		FD_ZERO(&readfds);
@@ -255,7 +257,7 @@ int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 		}
 						
 		if(FD_ISSET(clientSock, &readfds)){
-			if((rec = read(clientSock, buffer, BUFSIZ)) > 0){
+			if((rec = read(clientSock, buffer, BUFFER_SIZE)) > 0){
 				sen = write(targetSock, buffer, rec);
 				if(sen <= 0){
 					break;
@@ -266,7 +268,7 @@ int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 		}
 		
 		if(FD_ISSET(targetSock, &readfds)){
-			if((rec = read(targetSock, buffer, BUFSIZ)) > 0){
+			if((rec = read(targetSock, buffer, BUFFER_SIZE)) > 0){
 				sen = write(clientSock, buffer, rec);
 				if(sen <= 0){
 					break;
@@ -287,8 +289,8 @@ int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_s
 	fd_set readfds;
 	int nfds = -1;
 	struct timeval tv;
-	char buffer[BUFSIZ+1];
-	bzero(buffer, BUFSIZ+1);
+	char buffer[BUFFER_SIZE+1];
+	bzero(buffer, BUFFER_SIZE+1);
 	int err = 0;
 	
 	while(1){
@@ -307,7 +309,7 @@ int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_s
 		}
 		
 		if(FD_ISSET(clientSock, &readfds)){
-			rec = SSL_read(clientSslSocks5, buffer, BUFSIZ);
+			rec = SSL_read(clientSslSocks5, buffer, BUFFER_SIZE);
 			err = SSL_get_error(clientSslSocks5, rec);
 			
 			if(err == SSL_ERROR_NONE){
@@ -330,7 +332,7 @@ int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_s
 		}
 		
 		if(FD_ISSET(targetSock, &readfds)){
-			if((rec = read(targetSock, buffer, BUFSIZ)) > 0){
+			if((rec = read(targetSock, buffer, BUFFER_SIZE)) > 0){
 				while(1){
 					sen = SSL_write(clientSslSocks5, buffer, rec);
 					err = SSL_get_error(clientSslSocks5, sen);
@@ -449,8 +451,8 @@ int worker(void *ptr)
 	long forwarder_tv_sec = pParam->forwarder_tv_sec;
 	long forwarder_tv_usec = pParam->forwarder_tv_usec;
 	
-	char buffer[BUFSIZ+1];
-	bzero(buffer, BUFSIZ+1);
+	char buffer[BUFFER_SIZE+1];
+	bzero(buffer, BUFFER_SIZE+1);
 	int rec, sen;
 	int err = 0;
 	
@@ -460,9 +462,9 @@ int worker(void *ptr)
 	printf("[I] Recieving selection request.\n");
 #endif
 	if(socks5OverTlsFlag == 0){	// Socks5
-		rec = recvData(clientSock, buffer, BUFSIZ, tv_sec, tv_usec);
+		rec = recvData(clientSock, buffer, BUFFER_SIZE, tv_sec, tv_usec);
 	}else{	// Socks5 over TLS
-		rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFSIZ, tv_sec, tv_usec);
+		rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFFER_SIZE, tv_sec, tv_usec);
 	}
 	if(rec <= 0){
 #ifdef _DEBUG
@@ -524,9 +526,9 @@ int worker(void *ptr)
 		printf("[I] Recieving username password authentication request.\n");
 #endif
 		if(socks5OverTlsFlag == 0){	// Socks5
-			rec = recvData(clientSock, buffer, BUFSIZ, tv_sec, tv_usec);
+			rec = recvData(clientSock, buffer, BUFFER_SIZE, tv_sec, tv_usec);
 		}else{	// Socks5 over TLS
-			rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFSIZ, tv_sec, tv_usec);
+			rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFFER_SIZE, tv_sec, tv_usec);
 		}
 		if(rec <= 0){
 #ifdef _DEBUG
@@ -593,11 +595,11 @@ int worker(void *ptr)
 #ifdef _DEBUG
 	printf("[I] Receiving socks request.\n");
 #endif
-	bzero(buffer, BUFSIZ+1);
+	bzero(buffer, BUFFER_SIZE+1);
 	if(socks5OverTlsFlag == 0){	// Socks5
-		rec = recvData(clientSock, buffer, BUFSIZ, tv_sec, tv_usec);
+		rec = recvData(clientSock, buffer, BUFFER_SIZE, tv_sec, tv_usec);
 	}else{	// Socks5 over TLS
-		rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFSIZ, tv_sec, tv_usec);
+		rec = recvDataTls(clientSock, clientSslSocks5, buffer, BUFFER_SIZE, tv_sec, tv_usec);
 	}
 	if(rec <= 0){
 #ifdef _DEBUG
