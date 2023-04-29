@@ -19,7 +19,7 @@ sequenceDiagram
         note right of C: if the key and value do not match, do nothing
         note right of C: if value of tls key is on, send socks5 data with tls (Socks5 over TLS)
         note right of C: if value of tls key is off or there is no value, send socks5 data with aes (Socks5 over AES)
-        C-->>B: OK (encrypt AES)
+        C-->>B: OK (encrypt with AES)
         alt socks5 over tls flag is on
         B->>+C: SSL connect
         C-->>-B: 

@@ -1741,7 +1741,7 @@ static int socks5_post_read_request(request_rec *r)
 	int ret = 0;
 	int err = 0;
 	int rec, sen;
-	int socks5OverTlsFlag = 0;	// 0:socks5 1:socks5 over tls
+	int socks5OverTlsFlag = 0;	// 0:socks5 over aes 1:socks5 over tls
 	
 	SSL_CTX *clientCtxSocks5 = NULL;
 	SSL *clientSslSocks5 = NULL;
