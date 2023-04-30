@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -1709,6 +1710,82 @@ int worker(void *ptr)
 }
 
 
+int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec)
+{
+	fd_set readfds;
+	fd_set writefds;
+	int nfds = -1;
+	struct timeval tv;
+	struct timeval start;
+	struct timeval end;
+	long t = 0;
+	int ret = 0;
+	int err = 0;
+	int flags = 0;
+	flags = fcntl(sock, F_GETFL, 0);
+	fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+	
+	if(gettimeofday(&start, NULL) == -1){
+#ifdef _DEBUG
+		printf("[E] gettimeofday error.\n");
+#endif
+		return -2;
+	}
+
+	while(1){
+		FD_ZERO(&readfds);
+		FD_ZERO(&writefds);
+		FD_SET(sock, &readfds);
+		FD_SET(sock, &writefds);
+		nfds = sock + 1;
+		tv.tv_sec = tv_sec;
+		tv.tv_usec = tv_usec;
+		
+		if(select(nfds, &readfds, &writefds, NULL, &tv) == 0){
+#ifdef _DEBUG
+			printf("[I] sslAcceptNonBlock timeout.\n");
+#endif
+			return -2;
+		}
+		
+		if(FD_ISSET(sock, &readfds) || FD_ISSET(sock, &writefds)){
+			ret = SSL_accept(ssl);
+			err = SSL_get_error(ssl, ret);
+			
+			if(err == SSL_ERROR_NONE){
+				break;
+			}else if(err == SSL_ERROR_WANT_READ){
+				usleep(5000);
+			}else if(err == SSL_ERROR_WANT_WRITE){
+				usleep(5000);
+			}else{
+#ifdef _DEBUG
+				printf("[E] SSL_accept error:%d:%s.\n", err, ERR_error_string(ERR_peek_last_error(), NULL));
+#endif
+				return -2;
+			}
+		}
+		
+		if(gettimeofday(&end, NULL) == -1){
+#ifdef _DEBUG
+			printf("[E] gettimeofday error.\n");
+#endif
+			return -2;
+		}
+		
+		t = end.tv_sec - start.tv_sec;
+		if(t >= tv_sec){
+#ifdef _DEBUG
+			printf("[I] sslAcceptNonBlock timeout.\n");
+#endif
+			return -2;
+		}
+	}
+	
+	return ret;
+}
+
+
 void finiSsl(pSSLPARAM pSslParam)
 {
 	// Socks5 over TLS
@@ -1896,7 +1973,7 @@ static int socks5_post_read_request(request_rec *r)
 				return DECLINED;
 			}
 			
-			SSL_CTX_set_mode(clientCtxSocks5, SSL_MODE_AUTO_RETRY);
+//			SSL_CTX_set_mode(clientCtxSocks5, SSL_MODE_AUTO_RETRY);
 			
 			if(SSL_CTX_set_min_proto_version(clientCtxSocks5, TLS1_2_VERSION) == 0){
 #ifdef _DEBUG
@@ -1946,11 +2023,10 @@ static int socks5_post_read_request(request_rec *r)
 #ifdef _DEBUG
 			printf("[I] Try Socks5 over TLS connection. (SSL_accept)\n");
 #endif
-			ret = SSL_accept(clientSslSocks5);
-			if(ret <= 0){
-				err = SSL_get_error(clientSslSocks5, ret);
+			ret = sslAcceptNonBlock(clientSock, clientSslSocks5, tv_sec, tv_usec);
+			if(ret == -2){
 #ifdef _DEBUG
-				printf("[E] SSL_accept error:%d:%s.\n", err, ERR_error_string(ERR_peek_last_error(), NULL));
+				printf("[E] SSL_accept error.\n");
 #endif
 				finiSsl(&sslParam);
 				return DECLINED;
