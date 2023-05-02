@@ -876,7 +876,7 @@ int worker(void *ptr)
 	
 	// socks SELECTION_REQUEST
 #ifdef _DEBUG
-	printf("[I] Recieving selection request.\n");
+	printf("[I] Receive selection request.\n");
 #endif
 	if(socks5OverTlsFlag == 0){	// Socks5 over AES
 		rec = recvDataAes(clientSock, buffer, BUFFER_SIZE, aes_key, aes_iv, tv_sec, tv_usec);
@@ -885,12 +885,12 @@ int worker(void *ptr)
 	}
 	if(rec <= 0){
 #ifdef _DEBUG
-		printf("[E] Recieving selection request error.\n");
+		printf("[E] Receive selection request.\n");
 #endif
 		return -1;
 	}
 #ifdef _DEBUG
-	printf("[I] Recieive selection request:%d bytes.\n", rec);
+	printf("[I] Receive selection request:%d bytes.\n", rec);
 #endif
 	pSELECTION_REQUEST pSelectionRequest = (pSELECTION_REQUEST)buffer;
 	unsigned char method = 0xFF;
@@ -921,7 +921,7 @@ int worker(void *ptr)
 	}
 	if(sen <= 0){
 #ifdef _DEBUG
-		printf("[E] Sending selection response error.\n");
+		printf("[E] Send selection response.\n");
 #endif
 		free(pSelectionResponse);
 		return -1;
@@ -948,7 +948,7 @@ int worker(void *ptr)
 	if(method == 0x2){
 		// socks USERNAME_PASSWORD_AUTHENTICATION_REQUEST
 #ifdef _DEBUG
-		printf("[I] Recieving username password authentication request.\n");
+		printf("[I] Receive username password authentication request.\n");
 #endif
 		if(socks5OverTlsFlag == 0){	// Socks5 over AES
 			rec = recvDataAes(clientSock, buffer, BUFFER_SIZE, aes_key, aes_iv, tv_sec, tv_usec);
@@ -957,7 +957,7 @@ int worker(void *ptr)
 		}
 		if(rec <= 0){
 #ifdef _DEBUG
-			printf("[E] Recieving username password authentication request error.\n");
+			printf("[E] Receive username password authentication request.\n");
 #endif
 			return -1;
 		}
@@ -992,7 +992,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending username password authentication response error.\n");
+				printf("[E] Send username password authentication response.\n");
 #endif
 				
 				free(pUsernamePasswordAuthenticationResponse);
@@ -1016,7 +1016,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending username password authentication response error.\n");
+				printf("[E] Send username password authentication response.\n");
 #endif
 			}else{
 #ifdef _DEBUG
@@ -1032,7 +1032,7 @@ int worker(void *ptr)
 	
 	// socks SOCKS_REQUEST
 #ifdef _DEBUG
-	printf("[I] Receiving socks request.\n");
+	printf("[I] Receive socks request.\n");
 #endif
 	bzero(buffer, BUFFER_SIZE+1);
 	if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1042,7 +1042,7 @@ int worker(void *ptr)
 	}
 	if(rec <= 0){
 #ifdef _DEBUG
-		printf("[E] Receiving socks request error.\n");
+		printf("[E] Receive socks request.\n");
 #endif
 		return -1;
 	}
@@ -1070,7 +1070,7 @@ int worker(void *ptr)
 		}
 		if(sen <= 0){
 #ifdef _DEBUG
-			printf("[E] Sending socks response error.\n");
+			printf("[E] Send socks response.\n");
 #endif
 		}
 
@@ -1100,7 +1100,7 @@ int worker(void *ptr)
 		}
 		if(sen <= 0){
 #ifdef _DEBUG
-			printf("[E] Sending socks response error.\n");
+			printf("[E] Send socks response.\n");
 #endif
 		}
 		
@@ -1153,7 +1153,7 @@ int worker(void *ptr)
 					}
 					if(sen <= 0){
 #ifdef _DEBUG
-						printf("[E] Sending socks response error.\n");
+						printf("[E] Send socks response.\n");
 #endif
 					}
 					
@@ -1175,7 +1175,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}
 
@@ -1210,7 +1210,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 			}
 			
@@ -1236,7 +1236,7 @@ int worker(void *ptr)
 		}
 		if(sen <= 0){
 #ifdef _DEBUG
-			printf("[E] Sending socks response error.\n");
+			printf("[E] Send socks response.\n");
 #endif
 		}
 		
@@ -1277,7 +1277,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}else{
 #ifdef _DEBUG
@@ -1303,7 +1303,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 				
 				shutdown(targetSock, SHUT_RDWR);
@@ -1329,7 +1329,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 			}
 			
@@ -1357,7 +1357,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif				
 				}else{
 #ifdef _DEBUG
@@ -1382,7 +1382,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 				
 				shutdown(targetSock, SHUT_RDWR);
@@ -1407,7 +1407,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 			}
 			
@@ -1441,7 +1441,7 @@ int worker(void *ptr)
 					}
 					if(sen <= 0){
 #ifdef _DEBUG
-						printf("[E] Sending socks response error.\n");
+						printf("[E] Send socks response.\n");
 #endif
 					}else{
 #ifdef _DEBUG
@@ -1466,7 +1466,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 					
 					shutdown(targetSock, SHUT_RDWR);
@@ -1492,7 +1492,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}
 				
@@ -1519,7 +1519,7 @@ int worker(void *ptr)
 					}
 					if(sen <= 0){
 #ifdef _DEBUG
-						printf("[E] Sending socks response error.\n");
+						printf("[E] Send socks response.\n");
 #endif
 					}else{
 #ifdef _DEBUG
@@ -1544,7 +1544,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 					
 					shutdown(targetSock, SHUT_RDWR);
@@ -1569,7 +1569,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}
 				
@@ -1603,7 +1603,7 @@ int worker(void *ptr)
 					}
 					if(sen <= 0){
 #ifdef _DEBUG
-						printf("[E] Sending socks response error.\n");
+						printf("[E] Send socks response.\n");
 #endif
 					}else{
 #ifdef _DEBUG
@@ -1628,7 +1628,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 					
 					shutdown(targetSock, SHUT_RDWR);
@@ -1654,7 +1654,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}
 				
@@ -1681,7 +1681,7 @@ int worker(void *ptr)
 					}
 					if(sen <= 0){
 #ifdef _DEBUG
-						printf("[E] Sending socks response error.\n");
+						printf("[E] Send socks response.\n");
 #endif
 					}else{
 #ifdef _DEBUG
@@ -1706,7 +1706,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 					
 					shutdown(targetSock, SHUT_RDWR);
@@ -1731,7 +1731,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}
 				
@@ -1749,7 +1749,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 			}
 			
@@ -1783,7 +1783,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}else{
 #ifdef _DEBUG
@@ -1808,7 +1808,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 				
 				shutdown(targetSock, SHUT_RDWR);
@@ -1834,7 +1834,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 			}
 			
@@ -1861,7 +1861,7 @@ int worker(void *ptr)
 				}
 				if(sen <= 0){
 #ifdef _DEBUG
-					printf("[E] Sending socks response error.\n");
+					printf("[E] Send socks response.\n");
 #endif
 				}else{
 #ifdef _DEBUG
@@ -1886,7 +1886,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 				
 				shutdown(targetSock, SHUT_RDWR);
@@ -1911,7 +1911,7 @@ int worker(void *ptr)
 			}
 			if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 			}
 			
@@ -1929,7 +1929,7 @@ int worker(void *ptr)
 		}
 		if(sen <= 0){
 #ifdef _DEBUG
-				printf("[E] Sending socks response error.\n");
+				printf("[E] Send socks response.\n");
 #endif
 		}
 		
