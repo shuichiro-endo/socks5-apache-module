@@ -919,6 +919,14 @@ int worker(void *ptr)
 	}else{	// Socks5 over TLS
 		sen = sendDataTls(clientSock, clientSslSocks5, pSelectionResponse, sizeof(SELECTION_RESPONSE), tv_sec, tv_usec);
 	}
+	if(sen <= 0){
+#ifdef _DEBUG
+		printf("[E] Sending selection response error.\n");
+#endif
+		free(pSelectionResponse);
+		return -1;
+	}
+	
 	free(pSelectionResponse);
 #ifdef _DEBUG
 	printf("[I] Send selection response:%d bytes.\n", sen);
@@ -982,8 +990,16 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendDataTls(clientSock, clientSslSocks5, pUsernamePasswordAuthenticationResponse, sizeof(USERNAME_PASSWORD_AUTHENTICATION_RESPONSE), tv_sec, tv_usec);
 			}
+			if(sen <= 0){
 #ifdef _DEBUG
-			printf("[I] Send selection response:%d bytes.\n", sen);
+				printf("[E] Sending username password authentication response error.\n");
+#endif
+				
+				free(pUsernamePasswordAuthenticationResponse);
+				return -1;
+			}
+#ifdef _DEBUG
+			printf("[I] Send username password authentication response:%d bytes.\n", sen);
 #endif
 			
 			free(pUsernamePasswordAuthenticationResponse);
@@ -998,9 +1014,15 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendDataTls(clientSock, clientSslSocks5, pUsernamePasswordAuthenticationResponse, sizeof(USERNAME_PASSWORD_AUTHENTICATION_RESPONSE), tv_sec, tv_usec);
 			}
+			if(sen <= 0){
 #ifdef _DEBUG
-			printf("[I] Send selection response:%d bytes.\n", sen);
+				printf("[E] Sending username password authentication response error.\n");
 #endif
+			}else{
+#ifdef _DEBUG
+				printf("[I] Send username password authentication response:%d bytes.\n", sen);
+#endif
+			}
 			
 			free(pUsernamePasswordAuthenticationResponse);
 			return -1;
@@ -1046,6 +1068,11 @@ int worker(void *ptr)
 		}else{	// Socks5 over TLS
 			sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x8, 0x0, 0x1, tv_sec, tv_usec);
 		}
+		if(sen <= 0){
+#ifdef _DEBUG
+			printf("[E] Sending socks response error.\n");
+#endif
+		}
 
 		return -1;
 	}
@@ -1070,6 +1097,11 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x7, 0x0, 0x4, tv_sec, tv_usec);
 			}
+		}
+		if(sen <= 0){
+#ifdef _DEBUG
+			printf("[E] Sending socks response error.\n");
+#endif
 		}
 		
 		return -1;
@@ -1110,7 +1142,7 @@ int worker(void *ptr)
 				hints.ai_family = AF_INET6;	// IPv6
 				if(getaddrinfo(domainname, NULL, &hints, &pTargetHost) != 0){
 #ifdef _DEBUG
-					printf("[E] Cannnot resolv the domain name:%s.\n", (char *)domainname);
+					printf("[E] Cannot resolv the domain name:%s.\n", (char *)domainname);
 #endif
 					
 					// socks SOCKS_RESPONSE send error
@@ -1118,6 +1150,11 @@ int worker(void *ptr)
 						sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x5, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 					}else{	// Socks5 over TLS
 						sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x1, tv_sec, tv_usec);
+					}
+					if(sen <= 0){
+#ifdef _DEBUG
+						printf("[E] Sending socks response error.\n");
+#endif
 					}
 					
 					return -1;
@@ -1127,7 +1164,7 @@ int worker(void *ptr)
 			hints.ai_family = AF_INET6;	// IPv6
 			if(getaddrinfo(domainname, NULL, &hints, &pTargetHost) != 0){
 #ifdef _DEBUG
-				printf("[E] Cannnot resolv the domain name:%s.\n", (char *)domainname);
+				printf("[E] Cannot resolv the domain name:%s.\n", (char *)domainname);
 #endif
 				
 				// socks SOCKS_RESPONSE send error
@@ -1135,6 +1172,11 @@ int worker(void *ptr)
 					sen = sendSocksResponseIpv6Aes(clientSock, 0x5, 0x5, 0x0, 0x4, aes_key, aes_iv, tv_sec, tv_usec);
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x4, tv_sec, tv_usec);
+				}
+				if(sen <= 0){
+#ifdef _DEBUG
+					printf("[E] Sending socks response error.\n");
+#endif
 				}
 
 				return -1;
@@ -1166,6 +1208,11 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x1, 0x5, 0x0, 0x1, tv_sec, tv_usec);
 			}
+			if(sen <= 0){
+#ifdef _DEBUG
+				printf("[E] Sending socks response error.\n");
+#endif
+			}
 			
 			freeaddrinfo(pTargetHost);
 			return -1;
@@ -1186,6 +1233,11 @@ int worker(void *ptr)
 			sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x1, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 		}else{	// Socks5 over TLS
 			sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x1, 0x5, 0x0, 0x1, tv_sec, tv_usec);
+		}
+		if(sen <= 0){
+#ifdef _DEBUG
+			printf("[E] Sending socks response error.\n");
+#endif
 		}
 		
 		return -1;
@@ -1215,7 +1267,7 @@ int worker(void *ptr)
 			
 			if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
-				printf("[E] Cannnot connect. errno:%d\n", err);
+				printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 				
 				if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1223,10 +1275,18 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x1, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
 #endif
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+				}
 				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
 				close(targetSock);
 
 				return -1;
@@ -1241,9 +1301,20 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x1, tv_sec, tv_usec);
 			}
+			if(sen <= 0){
 #ifdef _DEBUG
-			printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+				printf("[E] Sending socks response error.\n");
 #endif
+				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
+				close(targetSock);
+				return -1;
+			}else{
+#ifdef _DEBUG
+				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+			}
 			
 		}else if(cmd == 0x2){	// BIND
 #ifdef _DEBUG
@@ -1255,6 +1326,11 @@ int worker(void *ptr)
 				sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x7, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x7, 0x0, 0x1, tv_sec, tv_usec);
+			}
+			if(sen <= 0){
+#ifdef _DEBUG
+				printf("[E] Sending socks response error.\n");
+#endif
 			}
 			
 			return -1;
@@ -1271,7 +1347,7 @@ int worker(void *ptr)
 		
 			if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
-				printf("[E] Cannnot connect. errno:%d\n", err);
+				printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 				
 				if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1279,12 +1355,19 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x1, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
+#endif				
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
 #endif
+				}
 				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
 				close(targetSock);
-
 				return -1;
 			}
 
@@ -1297,9 +1380,20 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x1, tv_sec, tv_usec);
 			}
+			if(sen <= 0){
 #ifdef _DEBUG
-			printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+				printf("[E] Sending socks response error.\n");
 #endif
+				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
+				close(targetSock);
+				return -1;
+			}else{
+#ifdef _DEBUG
+				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+			}
 
 		}else{
 #ifdef _DEBUG
@@ -1310,6 +1404,11 @@ int worker(void *ptr)
 				sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x1, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x1, 0x0, 0x1, tv_sec, tv_usec);
+			}
+			if(sen <= 0){
+#ifdef _DEBUG
+				printf("[E] Sending socks response error.\n");
+#endif
 			}
 			
 			return -1;
@@ -1332,7 +1431,7 @@ int worker(void *ptr)
 				
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
-					printf("[E] Cannnot connect. errno:%d\n", err);
+					printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 					
 					if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1340,12 +1439,19 @@ int worker(void *ptr)
 					}else{	// Socks5 over TLS
 						sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x1, tv_sec, tv_usec);
 					}
+					if(sen <= 0){
 #ifdef _DEBUG
-					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+						printf("[E] Sending socks response error.\n");
 #endif
-
-					close(targetSock);
+					}else{
+#ifdef _DEBUG
+						printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+					}
 					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
+					close(targetSock);
 					return -1;
 				}
 
@@ -1358,9 +1464,20 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x1, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
 #endif
+					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
+					close(targetSock);
+					return -1;
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+				}
 				
 			}else if(cmd == 0x2){	// BIND
 #ifdef _DEBUG
@@ -1372,6 +1489,11 @@ int worker(void *ptr)
 					sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x7, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x7, 0x0, 0x1, tv_sec, tv_usec);
+				}
+				if(sen <= 0){
+#ifdef _DEBUG
+					printf("[E] Sending socks response error.\n");
+#endif
 				}
 				
 				return -1;
@@ -1387,7 +1509,7 @@ int worker(void *ptr)
 			
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
-					printf("[E] Cannnot connect. errno:%d\n", err);
+					printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 					
 					if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1395,12 +1517,19 @@ int worker(void *ptr)
 					}else{	// Socks5 over TLS
 						sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x1, tv_sec, tv_usec);
 					}
+					if(sen <= 0){
 #ifdef _DEBUG
-					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+						printf("[E] Sending socks response error.\n");
 #endif
-
-					close(targetSock);
+					}else{
+#ifdef _DEBUG
+						printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+					}
 					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
+					close(targetSock);
 					return -1;
 				}
 
@@ -1413,9 +1542,20 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x1, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
 #endif
+					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
+					close(targetSock);
+					return -1;
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+				}
 			
 			}else{
 #ifdef _DEBUG
@@ -1426,6 +1566,11 @@ int worker(void *ptr)
 					sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x1, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x1, 0x0, 0x1, tv_sec, tv_usec);
+				}
+				if(sen <= 0){
+#ifdef _DEBUG
+					printf("[E] Sending socks response error.\n");
+#endif
 				}
 				
 				return -1;
@@ -1448,7 +1593,7 @@ int worker(void *ptr)
 			
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6))) < 0){
 #ifdef _DEBUG
-					printf("[E] Cannnot connect. errno:%d\n", err);
+					printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 					
 					if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1456,12 +1601,19 @@ int worker(void *ptr)
 					}else{	// Socks5 over TLS
 						sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x4, tv_sec, tv_usec);
 					}
+					if(sen <= 0){
 #ifdef _DEBUG
-					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+						printf("[E] Sending socks response error.\n");
 #endif
-
+					}else{
+#ifdef _DEBUG
+						printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+					}
+					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
 					close(targetSock);
-
 					return -1;
 				}
 
@@ -1474,9 +1626,20 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x4, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
 #endif
+					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
+					close(targetSock);
+					return -1;
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+				}
 				
 			}else if(cmd == 0x2){	// BIND
 #ifdef _DEBUG
@@ -1488,6 +1651,11 @@ int worker(void *ptr)
 					sen = sendSocksResponseIpv6Aes(clientSock, 0x5, 0x7, 0x0, 0x4, aes_key, aes_iv, tv_sec, tv_usec);
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x7, 0x0, 0x4, tv_sec, tv_usec);
+				}
+				if(sen <= 0){
+#ifdef _DEBUG
+					printf("[E] Sending socks response error.\n");
+#endif
 				}
 				
 				return -1;
@@ -1503,7 +1671,7 @@ int worker(void *ptr)
 								
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6))) < 0){
 #ifdef _DEBUG
-					printf("[E] Cannnot connect. errno:%d\n", err);
+					printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 					
 					if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1511,13 +1679,19 @@ int worker(void *ptr)
 					}else{	// Socks5 over TLS
 						sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x4, tv_sec, tv_usec);
 					}
-					
+					if(sen <= 0){
 #ifdef _DEBUG
-					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+						printf("[E] Sending socks response error.\n");
 #endif
-
+					}else{
+#ifdef _DEBUG
+						printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+					}
+					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
 					close(targetSock);
-
 					return -1;
 				}
 
@@ -1530,9 +1704,20 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x4, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
 #endif
+					
+					shutdown(targetSock, SHUT_RDWR);
+					usleep(500);
+					close(targetSock);
+					return -1;
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+				}
 
 			}else{
 #ifdef _DEBUG
@@ -1543,6 +1728,11 @@ int worker(void *ptr)
 					sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x1, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x1, 0x0, 0x1, tv_sec, tv_usec);
+				}
+				if(sen <= 0){
+#ifdef _DEBUG
+					printf("[E] Sending socks response error.\n");
+#endif
 				}
 				
 				return -1;
@@ -1556,6 +1746,11 @@ int worker(void *ptr)
 				sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x1, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x1, 0x0, 0x1, tv_sec, tv_usec);
+			}
+			if(sen <= 0){
+#ifdef _DEBUG
+				printf("[E] Sending socks response error.\n");
+#endif
 			}
 			
 			return -1;
@@ -1578,7 +1773,7 @@ int worker(void *ptr)
 			
 			if((err = connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6))) < 0){
 #ifdef _DEBUG
-				printf("[E] Cannnot connect. errno:%d\n", err);
+				printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 				
 				if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1586,12 +1781,19 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x4, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
 #endif
-
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+				}
+				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
 				close(targetSock);
-
 				return -1;
 			}
 
@@ -1604,9 +1806,20 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x4, tv_sec, tv_usec);
 			}
+			if(sen <= 0){
 #ifdef _DEBUG
-			printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+				printf("[E] Sending socks response error.\n");
 #endif
+				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
+				close(targetSock);
+				return -1;
+			}else{
+#ifdef _DEBUG
+				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+			}
 
 		}else if(cmd == 0x2){	// BIND
 #ifdef _DEBUG
@@ -1618,6 +1831,11 @@ int worker(void *ptr)
 				sen = sendSocksResponseIpv6Aes(clientSock, 0x5, 0x7, 0x0, 0x4, aes_key, aes_iv, tv_sec, tv_usec);
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x7, 0x0, 0x4, tv_sec, tv_usec);
+			}
+			if(sen <= 0){
+#ifdef _DEBUG
+				printf("[E] Sending socks response error.\n");
+#endif
 			}
 			
 			return -1;
@@ -1633,7 +1851,7 @@ int worker(void *ptr)
 		
 			if(connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6)) < 0){
 #ifdef _DEBUG
-				printf("[E] Cannnot connect. errno:%d\n", err);
+				printf("[E] Cannot connect. errno:%d\n", err);
 #endif
 				
 				if(socks5OverTlsFlag == 0){	// Socks5 over AES
@@ -1641,12 +1859,19 @@ int worker(void *ptr)
 				}else{	// Socks5 over TLS
 					sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x5, 0x0, 0x4, tv_sec, tv_usec);
 				}
+				if(sen <= 0){
 #ifdef _DEBUG
-				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+					printf("[E] Sending socks response error.\n");
 #endif
-
+				}else{
+#ifdef _DEBUG
+					printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+				}
+				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
 				close(targetSock);
-
 				return -1;
 			}
 
@@ -1659,9 +1884,20 @@ int worker(void *ptr)
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x0, 0x0, 0x4, tv_sec, tv_usec);
 			}
+			if(sen <= 0){
 #ifdef _DEBUG
-			printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+				printf("[E] Sending socks response error.\n");
 #endif
+				
+				shutdown(targetSock, SHUT_RDWR);
+				usleep(500);
+				close(targetSock);
+				return -1;
+			}else{
+#ifdef _DEBUG
+				printf("[I] Socks Request:%d bytes, Socks Response:%d bytes.\n", rec, sen);
+#endif
+			}
 			
 		}else{
 #ifdef _DEBUG
@@ -1672,6 +1908,11 @@ int worker(void *ptr)
 				sen = sendSocksResponseIpv6Aes(clientSock, 0x5, 0x1, 0x0, 0x4, aes_key, aes_iv, tv_sec, tv_usec);
 			}else{	// Socks5 over TLS
 				sen = sendSocksResponseIpv6Tls(clientSock, clientSslSocks5, 0x5, 0x1, 0x0, 0x4, tv_sec, tv_usec);
+			}
+			if(sen <= 0){
+#ifdef _DEBUG
+				printf("[E] Sending socks response error.\n");
+#endif
 			}
 			
 			return -1;
@@ -1685,6 +1926,11 @@ int worker(void *ptr)
 			sen = sendSocksResponseIpv4Aes(clientSock, 0x5, 0x1, 0x0, 0x1, aes_key, aes_iv, tv_sec, tv_usec);
 		}else{	// Socks5 over TLS
 			sen = sendSocksResponseIpv4Tls(clientSock, clientSslSocks5, 0x5, 0x1, 0x0, 0x1, tv_sec, tv_usec);
+		}
+		if(sen <= 0){
+#ifdef _DEBUG
+				printf("[E] Sending socks response error.\n");
+#endif
 		}
 		
 		return -1;
@@ -1704,6 +1950,8 @@ int worker(void *ptr)
 #ifdef _DEBUG
 	printf("[I] Worker exit.\n");
 #endif
+	shutdown(targetSock, SHUT_RDWR);
+	usleep(500);
 	close(targetSock);
 	
 	return 0;
