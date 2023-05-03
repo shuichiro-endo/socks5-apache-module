@@ -1261,9 +1261,9 @@ int worker(void *ptr)
 #endif
 			targetSock = socket(AF_INET, SOCK_STREAM, 0);
 			
+			// blocking
 			flags = fcntl(targetSock, F_GETFL, 0);
-			flags &= ~O_NONBLOCK;
-			fcntl(targetSock, F_SETFL, flags);
+			fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);
 			
 			if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
@@ -1341,9 +1341,9 @@ int worker(void *ptr)
 #endif
 			targetSock = socket(AF_INET, SOCK_DGRAM, 0);
 			
+			// blocking
 			flags = fcntl(targetSock, F_GETFL, 0);
-			flags &= ~O_NONBLOCK;
-			fcntl(targetSock, F_SETFL, flags);
+			fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);
 		
 			if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
@@ -1425,9 +1425,9 @@ int worker(void *ptr)
 #endif
 				targetSock = socket(AF_INET, SOCK_STREAM, 0);
 				
+				// blocking
 				flags = fcntl(targetSock, F_GETFL, 0);
-				flags &= ~O_NONBLOCK;
-				fcntl(targetSock, F_SETFL, flags);
+				fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);
 				
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
@@ -1503,10 +1503,10 @@ int worker(void *ptr)
 #endif
 				targetSock = socket(AF_INET, SOCK_DGRAM, 0);
 				
+				// blocking
 				flags = fcntl(targetSock, F_GETFL, 0);
-				flags &= ~O_NONBLOCK;
-				fcntl(targetSock, F_SETFL, flags);
-			
+				fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);
+				
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr, sizeof(targetAddr))) < 0){
 #ifdef _DEBUG
 					printf("[E] Cannot connect. errno:%d\n", err);
@@ -1587,10 +1587,10 @@ int worker(void *ptr)
 #endif
 				targetSock = socket(AF_INET6, SOCK_STREAM, 0);
 
+				// blocking
 				flags = fcntl(targetSock, F_GETFL, 0);
-				flags &= ~O_NONBLOCK;
-				fcntl(targetSock, F_SETFL, flags);
-			
+				fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);
+				
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6))) < 0){
 #ifdef _DEBUG
 					printf("[E] Cannot connect. errno:%d\n", err);
@@ -1665,10 +1665,10 @@ int worker(void *ptr)
 #endif
 				targetSock = socket(AF_INET6, SOCK_DGRAM, 0);
 				
+				// blocking
 				flags = fcntl(targetSock, F_GETFL, 0);
-				flags &= ~O_NONBLOCK;
-				fcntl(targetSock, F_SETFL, flags);				
-								
+				fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);				
+				
 				if((err = connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6))) < 0){
 #ifdef _DEBUG
 					printf("[E] Cannot connect. errno:%d\n", err);
@@ -1767,9 +1767,9 @@ int worker(void *ptr)
 #endif
 			targetSock = socket(AF_INET6, SOCK_STREAM, 0);
 			
+			// blocking
 			flags = fcntl(targetSock, F_GETFL, 0);
-			flags &= ~O_NONBLOCK;
-			fcntl(targetSock, F_SETFL, flags);
+			fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);
 			
 			if((err = connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6))) < 0){
 #ifdef _DEBUG
@@ -1845,10 +1845,10 @@ int worker(void *ptr)
 #endif
 			targetSock = socket(AF_INET6, SOCK_DGRAM, 0);
 
+			// blocking
 			flags = fcntl(targetSock, F_GETFL, 0);
-			flags &= ~O_NONBLOCK;
-			fcntl(targetSock, F_SETFL, flags);
-		
+			fcntl(targetSock, F_SETFL, flags & ~O_NONBLOCK);
+			
 			if(connect(targetSock, (struct sockaddr *)&targetAddr6, sizeof(targetAddr6)) < 0){
 #ifdef _DEBUG
 				printf("[E] Cannot connect. errno:%d\n", err);
@@ -1970,6 +1970,8 @@ int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec)
 	int ret = 0;
 	int err = 0;
 	int flags = 0;
+	
+	// non blocking
 	flags = fcntl(sock, F_GETFL, 0);
 	fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 	
@@ -1977,6 +1979,9 @@ int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec)
 #ifdef _DEBUG
 		printf("[E] gettimeofday error.\n");
 #endif
+		// blocking
+		flags = fcntl(sock, F_GETFL, 0);
+		fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
 		return -2;
 	}
 
@@ -1993,6 +1998,9 @@ int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec)
 #ifdef _DEBUG
 			printf("[I] sslAcceptNonBlock timeout.\n");
 #endif
+			// blocking
+			flags = fcntl(sock, F_GETFL, 0);
+			fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
 			return -2;
 		}
 		
@@ -2010,6 +2018,9 @@ int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec)
 #ifdef _DEBUG
 				printf("[E] SSL_accept error:%d:%s.\n", err, ERR_error_string(ERR_peek_last_error(), NULL));
 #endif
+				// blocking
+				flags = fcntl(sock, F_GETFL, 0);
+				fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
 				return -2;
 			}
 		}
@@ -2018,6 +2029,9 @@ int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec)
 #ifdef _DEBUG
 			printf("[E] gettimeofday error.\n");
 #endif
+			// blocking
+			flags = fcntl(sock, F_GETFL, 0);
+			fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
 			return -2;
 		}
 		
@@ -2026,9 +2040,16 @@ int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec)
 #ifdef _DEBUG
 			printf("[I] sslAcceptNonBlock timeout.\n");
 #endif
+			// blocking
+			flags = fcntl(sock, F_GETFL, 0);
+			fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
 			return -2;
 		}
 	}
+	
+	// blocking
+	flags = fcntl(sock, F_GETFL, 0);
+	fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
 	
 	return ret;
 }
@@ -2173,10 +2194,9 @@ static int socks5_post_read_request(request_rec *r)
 			clientSock = clientSocket->socketdes;
 		}
 
-		// non blocking
+		// blocking
 		flags = fcntl(clientSock, F_GETFL, 0);
-		flags &= ~O_NONBLOCK;
-		fcntl(clientSock, F_SETFL, flags);
+		fcntl(clientSock, F_SETFL, flags & ~O_NONBLOCK);
 		
 		// send OK to client
 		sen = sendDataAes(clientSock, "OK", strlen("OK"), aes_key, aes_iv, tv_sec, tv_usec);
