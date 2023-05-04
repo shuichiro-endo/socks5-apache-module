@@ -454,7 +454,7 @@ int sendData(int sock, void *buffer, int length, long tv_sec, long tv_usec)
 		}
 	}
 	
-	return sendLength;
+	return length;
 }
 
 
@@ -550,7 +550,7 @@ int sendDataAes(int sock, void *buffer, int length, unsigned char *aes_key, unsi
 		}
 	}
 	
-	return sendLength;
+	return length;
 }
 
 
@@ -620,7 +620,7 @@ int sendDataTls(int sock, SSL *ssl, void *buffer, int length, long tv_sec, long 
 		}
 	}
 		
-	return sen;
+	return length;
 }
 
 
