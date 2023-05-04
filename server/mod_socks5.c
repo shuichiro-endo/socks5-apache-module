@@ -1435,9 +1435,7 @@ int worker(void *ptr)
 #endif
 				}
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 
 				return -1;
 			}
@@ -1456,9 +1454,7 @@ int worker(void *ptr)
 				printf("[E] Send socks response.\n");
 #endif
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 				return -1;
 			}else{
 #ifdef _DEBUG
@@ -1515,9 +1511,7 @@ int worker(void *ptr)
 #endif
 				}
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 				return -1;
 			}
 
@@ -1535,9 +1529,7 @@ int worker(void *ptr)
 				printf("[E] Send socks response.\n");
 #endif
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 				return -1;
 			}else{
 #ifdef _DEBUG
@@ -1599,9 +1591,7 @@ int worker(void *ptr)
 #endif
 					}
 					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}
 
@@ -1619,9 +1609,7 @@ int worker(void *ptr)
 					printf("[E] Send socks response.\n");
 #endif
 					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}else{
 #ifdef _DEBUG
@@ -1677,9 +1665,7 @@ int worker(void *ptr)
 #endif
 					}
 					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}
 
@@ -1697,9 +1683,7 @@ int worker(void *ptr)
 					printf("[E] Send socks response.\n");
 #endif
 					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}else{
 #ifdef _DEBUG
@@ -1761,9 +1745,7 @@ int worker(void *ptr)
 #endif
 					}
 					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}
 
@@ -1780,10 +1762,7 @@ int worker(void *ptr)
 #ifdef _DEBUG
 					printf("[E] Send socks response.\n");
 #endif
-					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}else{
 #ifdef _DEBUG
@@ -1839,9 +1818,7 @@ int worker(void *ptr)
 #endif
 					}
 					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}
 
@@ -1859,9 +1836,7 @@ int worker(void *ptr)
 					printf("[E] Send socks response.\n");
 #endif
 					
-					shutdown(targetSock, SHUT_RDWR);
-					usleep(500);
-					close(targetSock);
+					closeSocket(targetSock);
 					return -1;
 				}else{
 #ifdef _DEBUG
@@ -1941,9 +1916,7 @@ int worker(void *ptr)
 #endif
 				}
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 				return -1;
 			}
 
@@ -1961,9 +1934,7 @@ int worker(void *ptr)
 				printf("[E] Send socks response.\n");
 #endif
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 				return -1;
 			}else{
 #ifdef _DEBUG
@@ -2019,9 +1990,7 @@ int worker(void *ptr)
 #endif
 				}
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 				return -1;
 			}
 
@@ -2039,9 +2008,7 @@ int worker(void *ptr)
 				printf("[E] Send socks response.\n");
 #endif
 				
-				shutdown(targetSock, SHUT_RDWR);
-				usleep(500);
-				close(targetSock);
+				closeSocket(targetSock);
 				return -1;
 			}else{
 #ifdef _DEBUG
@@ -2100,9 +2067,7 @@ int worker(void *ptr)
 #ifdef _DEBUG
 	printf("[I] Worker exit.\n");
 #endif
-	shutdown(targetSock, SHUT_RDWR);
-	usleep(500);
-	close(targetSock);
+	closeSocket(targetSock);
 	
 	return 0;
 }
@@ -2217,6 +2182,16 @@ void finiSsl(pSSLPARAM pSslParam)
 	}
 
 	return;	
+}
+
+
+void closeSocket(int sock)
+{
+	shutdown(sock, SHUT_RDWR);
+	usleep(500);
+	close(sock);
+	
+	return;
 }
 
 

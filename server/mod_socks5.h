@@ -23,6 +23,7 @@ int sendSocksResponseIpv6(int clientSock, char ver, char req, char rsv, char aty
 int sendSocksResponseIpv6Aes(int clientSock, char ver, char req, char rsv, char atyp, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
 int sendSocksResponseIpv6Tls(int clientSock, SSL *clientSsl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
 int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec);
+void closeSocket(int sock);
 int worker(void *ptr);
 
 typedef struct {
