@@ -655,6 +655,8 @@ int sendDataTls(int sock, SSL *ssl, void *buffer, int length, long tv_sec, long 
 int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 {
 	int rec, sen;
+	int len = 0;
+	int sendLength = 0;
 	fd_set readfds;
 	int nfds = -1;
 	struct timeval tv;
@@ -677,10 +679,24 @@ int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 		}
 						
 		if(FD_ISSET(clientSock, &readfds)){
-			if((rec = read(clientSock, buffer, BUFFER_SIZE)) > 0){
-				sen = write(targetSock, buffer, rec);
-				if(sen <= 0){
-					break;
+			if((rec = recv(clientSock, buffer, BUFFER_SIZE, 0)) > 0){
+				len = rec;
+				sendLength = 0;
+				
+				while(len > 0){
+					sen = send(targetSock, buffer+sendLength, len, 0);
+					if(sen <= 0){
+						if(errno == EINTR){
+							continue;
+						}else if(errno == EAGAIN){
+							usleep(5000);
+							continue;
+						}else{
+							return -1;
+						}
+					}
+					sendLength += sen;
+					len -= sen;
 				}
 			}else{
 				break;
@@ -688,10 +704,24 @@ int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 		}
 		
 		if(FD_ISSET(targetSock, &readfds)){
-			if((rec = read(targetSock, buffer, BUFFER_SIZE)) > 0){
-				sen = write(clientSock, buffer, rec);
-				if(sen <= 0){
-					break;
+			if((rec = recv(targetSock, buffer, BUFFER_SIZE, 0)) > 0){
+				len = rec;
+				sendLength = 0;
+				
+				while(len > 0){
+					sen = send(clientSock, buffer+sendLength, len, 0);
+					if(sen <= 0){
+						if(errno == EINTR){
+							continue;
+						}else if(errno == EAGAIN){
+							usleep(5000);
+							continue;
+						}else{
+							return -1;
+						}
+					}
+					sendLength += sen;
+					len -= sen;
 				}
 			}else{
 				break;
@@ -706,11 +736,12 @@ int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec)
 int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec)
 {
 	int rec, sen;
+	int len = 0;
+	int sendLength = 0;
 	fd_set readfds;
 	int nfds = -1;
 	struct timeval tv;
 	int ret = 0;
-	int len = 0;
 	pSEND_RECV_DATA_AES pData = (pSEND_RECV_DATA_AES)calloc(1, sizeof(SEND_RECV_DATA_AES));
 	int encryptDataLength = 0;
 	unsigned char *tmp = calloc(16, sizeof(unsigned char));
@@ -737,7 +768,7 @@ int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigne
 			bzero(buffer, BUFFER_SIZE*2);
 			bzero(buffer2, BUFFER_SIZE*2);
 			
-			if((rec = read(clientSock, buffer, 16)) > 0){
+			if((rec = recv(clientSock, buffer, 16, 0)) > 0){	// unsigned char encryptDataLength[16]
 				if(rec != 16){
 					break;
 				}
@@ -762,7 +793,7 @@ int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigne
 				
 				bzero(buffer, BUFFER_SIZE*2);
 				
-				if((rec = read(clientSock, buffer, encryptDataLength)) > 0){
+				if((rec = recv(clientSock, buffer, encryptDataLength, 0)) > 0){
 					if(rec != encryptDataLength){
 						free(tmp);
 						free(pData);
@@ -781,13 +812,26 @@ int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigne
 					}
 					
 					len = ret;
-					sen = write(targetSock, buffer2, len);
-					if(sen <= 0){
-						free(tmp);
-						free(pData);
-						free(buffer);
-						free(buffer2);
-						return -1;
+					sendLength = 0;
+					
+					while(len > 0){
+						sen = send(targetSock, buffer2+sendLength, len, 0);
+						if(sen <= 0){
+							if(errno == EINTR){
+								continue;
+							}else if(errno == EAGAIN){
+								usleep(5000);
+								continue;
+							}else{
+								free(tmp);
+								free(pData);
+								free(buffer);
+								free(buffer2);
+								return -1;
+							}
+						}
+						sendLength += sen;
+						len -= sen;
 					}
 				}else{
 					break;
@@ -802,7 +846,7 @@ int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigne
 			bzero(pData, sizeof(SEND_RECV_DATA_AES));
 			bzero(buffer, BUFFER_SIZE*2);
 			
-			if((rec = read(targetSock, buffer, BUFFER_SIZE)) > 0){
+			if((rec = recv(targetSock, buffer, BUFFER_SIZE, 0)) > 0){
 				ret = aesEncrypt((unsigned char *)buffer, rec, aes_key, aes_iv, pData->encryptData);
 				if(ret > 0){
 					encryptDataLength = ret;
@@ -829,9 +873,26 @@ int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigne
 				}
 				
 				len = 16 + encryptDataLength;
-				sen = write(clientSock, (unsigned char *)pData, len);
-				if(sen <= 0){
-					break;
+				sendLength = 0;
+				
+				while(len > 0){
+					sen = send(clientSock, (unsigned char *)pData+sendLength, len, 0);
+					if(sen <= 0){
+						if(errno == EINTR){
+							continue;
+						}else if(errno == EAGAIN){
+							usleep(5000);
+							continue;
+						}else{
+							free(tmp);
+							free(pData);
+							free(buffer);
+							free(buffer2);
+							return -1;
+						}
+					}
+					sendLength += sen;
+					len -= sen;
 				}
 			}else{
 				break;
@@ -850,6 +911,8 @@ int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigne
 int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_sec, long tv_usec)
 {
 	int rec, sen;
+	int len = 0;
+	int sendLength = 0;
 	fd_set readfds;
 	int nfds = -1;
 	struct timeval tv;
@@ -877,9 +940,23 @@ int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_s
 			err = SSL_get_error(clientSslSocks5, rec);
 			
 			if(err == SSL_ERROR_NONE){
-				sen = write(targetSock, buffer, rec);
-				if(sen <= 0){
-					break;
+				len = rec;
+				sendLength = 0;
+				
+				while(len > 0){
+					sen = send(targetSock, buffer+sendLength, len, 0);
+					if(sen <= 0){
+						if(errno == EINTR){
+							continue;
+						}else if(errno == EAGAIN){
+							usleep(5000);
+							continue;
+						}else{
+							return -2;
+						}
+					}
+					sendLength += sen;
+					len -= sen;
 				}
 			}else if(err == SSL_ERROR_ZERO_RETURN){
 				break;
@@ -896,7 +973,7 @@ int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_s
 		}
 		
 		if(FD_ISSET(targetSock, &readfds)){
-			if((rec = read(targetSock, buffer, BUFFER_SIZE)) > 0){
+			if((rec = recv(targetSock, buffer, BUFFER_SIZE, 0)) > 0){
 				while(1){
 					sen = SSL_write(clientSslSocks5, buffer, rec);
 					err = SSL_get_error(clientSslSocks5, sen);
