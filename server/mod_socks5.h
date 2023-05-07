@@ -5,45 +5,45 @@
 
 #define BUFFER_SIZE 8192
 
-int aesEncrypt(unsigned char *plaintext, int plaintext_length, unsigned char *aes_key, unsigned char *aes_iv, unsigned char *ciphertext);
-int aesDecrypt(unsigned char *ciphertext, int ciphertext_length, unsigned char *aes_key, unsigned char *aes_iv, unsigned char *plaintext);
-int recvData(int sock, void *buffer, int length, long tv_sec, long tv_usec);
-int recvDataAes(int sock, void *buffer, int length, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
-int recvDataTls(int sock, SSL *ssl ,void *buffer, int length, long tv_sec, long tv_usec);
-int sendData(int sock, void *buffer, int length, long tv_sec, long tv_usec);
-int sendDataAes(int sock, void *buffer, int length, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
-int sendDataTls(int sock, SSL *ssl, void *buffer, int length, long tv_sec, long tv_usec);
-int forwarder(int clientSock, int targetSock, long tv_sec, long tv_usec);
-int forwarderAes(int clientSock, int targetSock, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
-int forwarderTls(int clientSock, int targetSock, SSL *clientSslSocks5, long tv_sec, long tv_usec);
-int sendSocksResponseIpv4(int clientSock, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
-int sendSocksResponseIpv4Aes(int clientSock, char ver, char req, char rsv, char atyp, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
-int sendSocksResponseIpv4Tls(int clientSock, SSL *clientSsl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
-int sendSocksResponseIpv6(int clientSock, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
-int sendSocksResponseIpv6Aes(int clientSock, char ver, char req, char rsv, char atyp, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
-int sendSocksResponseIpv6Tls(int clientSock, SSL *clientSsl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
-int sslAcceptNonBlock(int sock, SSL *ssl, long tv_sec, long tv_usec);
-void closeSocket(int sock);
+int encrypt_aes(unsigned char *plaintext, int plaintext_length, unsigned char *aes_key, unsigned char *aes_iv, unsigned char *ciphertext);
+int decrypt_aes(unsigned char *ciphertext, int ciphertext_length, unsigned char *aes_key, unsigned char *aes_iv, unsigned char *plaintext);
+int recv_data(int sock, void *buffer, int length, long tv_sec, long tv_usec);
+int recv_data_aes(int sock, void *buffer, int length, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
+int recv_data_tls(int sock, SSL *ssl ,void *buffer, int length, long tv_sec, long tv_usec);
+int send_data(int sock, void *buffer, int length, long tv_sec, long tv_usec);
+int send_data_aes(int sock, void *buffer, int length, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
+int send_data_tls(int sock, SSL *ssl, void *buffer, int length, long tv_sec, long tv_usec);
+int forwarder(int client_sock, int target_sock, long tv_sec, long tv_usec);
+int forwarder_aes(int client_sock, int target_sock, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
+int forwarder_tls(int client_sock, int target_sock, SSL *client_ssl_socks5, long tv_sec, long tv_usec);
+int send_socks_response_ipv4(int client_sock, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
+int send_socks_response_ipv4_aes(int client_sock, char ver, char req, char rsv, char atyp, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
+int send_socks_response_ipv4_tls(int client_sock, SSL *client_ssl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
+int send_socks_response_ipv6(int client_sock, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
+int send_socks_response_ipv6_aes(int client_sock, char ver, char req, char rsv, char atyp, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
+int send_socks_response_ipv6_tls(int client_sock, SSL *client_ssl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
+int ssl_sccept_non_blocking(int sock, SSL *ssl, long tv_sec, long tv_usec);
+void close_socket(int sock);
 int worker(void *ptr);
 
-typedef struct {
-	int clientSock;
-	SSL *clientSslSocks5;
-	int socks5OverTlsFlag;
+struct worker_param {
+	int client_sock;
+	SSL *client_ssl_socks5;
+	int socks5_over_tls_flag;	// 0:socks5 over aes 1:socks5 over tls
 	unsigned char *aes_key;
 	unsigned char *aes_iv;
 	long tv_sec;		// recv send
 	long tv_usec;		// recv send
 	long forwarder_tv_sec;
 	long forwarder_tv_usec;
-} PARAM, *pPARAM;
+};
 
-typedef struct {
-	SSL_CTX *clientCtxSocks5;
-	SSL *clientSslSocks5;
-} SSLPARAM, *pSSLPARAM;
+struct ssl_param {
+	SSL_CTX *client_ctx_socks5;
+	SSL *client_ssl_socks5;
+};
 
-void finiSsl(pSSLPARAM pSslParam);
+void fini_ssl(struct ssl_param *param);
 
 typedef struct sock_userdata_t sock_userdata_t;
 struct sock_userdata_t {
@@ -70,16 +70,15 @@ typedef struct apr_socket_t {
 	apr_pollset_t *pollset;
 } apr_socket_t;
 
-typedef struct
+struct username_password_authentication_request_tmp
 {
 	char ver;
 	char ulen;
 	char uname;
 	// variable
-} USERNAME_PASSWORD_AUTHENTICATION_REQUEST_TMP, *pUSERNAME_PASSWORD_AUTHENTICATION_REQUEST_TMP;
+};
 
-typedef struct {
-	unsigned char encryptDataLength[16];
-	unsigned char encryptData[BUFFER_SIZE*2];
-} SEND_RECV_DATA_AES, *pSEND_RECV_DATA_AES;
-
+struct send_recv_data_aes {
+	unsigned char encrypt_data_length[16];
+	unsigned char encrypt_data[BUFFER_SIZE*2];
+};
