@@ -69,6 +69,12 @@ sequenceDiagram
     sudo apt install openssl libssl-dev
     ```
 
+### Version
+I tested this module using the following version.
+- Debian 12
+- apache2 2.4.57
+- openssl 3.0.8
+
 ### Install
 #### 1. download the latest [socks5 apache module](https://github.com/shuichiro-endo/socks5-apache-module)
 ```
