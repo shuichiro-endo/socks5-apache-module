@@ -917,8 +917,7 @@ int forwarder_tls(int client_sock, int target_sock, SSL *client_ssl_socks5, long
 	fd_set readfds;
 	int nfds = -1;
 	struct timeval tv;
-	char buffer[BUFFER_SIZE+1];
-	bzero(buffer, BUFFER_SIZE+1);
+	unsigned char *buffer = calloc(BUFFER_SIZE*2, sizeof(unsigned char));
 	int err = 0;
 	
 	while(1){
@@ -937,6 +936,8 @@ int forwarder_tls(int client_sock, int target_sock, SSL *client_ssl_socks5, long
 		}
 		
 		if(FD_ISSET(client_sock, &readfds)){
+			bzero(buffer, BUFFER_SIZE*2);
+
 			rec = SSL_read(client_ssl_socks5, buffer, BUFFER_SIZE);
 			err = SSL_get_error(client_ssl_socks5, rec);
 			
@@ -945,7 +946,7 @@ int forwarder_tls(int client_sock, int target_sock, SSL *client_ssl_socks5, long
 				send_length = 0;
 				
 				while(len > 0){
-					sen = send(target_sock, buffer+send_length, len, 0);
+					sen = send(target_sock, (unsigned char *)buffer+send_length, len, 0);
 					if(sen <= 0){
 						if(errno == EINTR){
 							continue;
@@ -953,6 +954,7 @@ int forwarder_tls(int client_sock, int target_sock, SSL *client_ssl_socks5, long
 							usleep(5000);
 							continue;
 						}else{
+							free(buffer);
 							return -2;
 						}
 					}
@@ -969,12 +971,26 @@ int forwarder_tls(int client_sock, int target_sock, SSL *client_ssl_socks5, long
 #ifdef _DEBUG
 				printf("[E] SSL_read error:%d:%s.\n", err, ERR_error_string(ERR_peek_last_error(), NULL));
 #endif
+				free(buffer);
 				return -2;
 			}
 		}
 		
 		if(FD_ISSET(target_sock, &readfds)){
-			if((rec = recv(target_sock, buffer, BUFFER_SIZE, 0)) > 0){
+			bzero(buffer, BUFFER_SIZE*2);
+
+			rec = recv(target_sock, buffer, BUFFER_SIZE, 0);
+			if(rec <= 0){
+				if(errno == EINTR){
+					continue;
+				}else if(errno == EAGAIN){
+					usleep(5000);
+					continue;
+				}else{
+					free(buffer);
+					return -2;
+				}
+			}else{
 				while(1){
 					sen = SSL_write(client_ssl_socks5, buffer, rec);
 					err = SSL_get_error(client_ssl_socks5, sen);
@@ -989,15 +1005,15 @@ int forwarder_tls(int client_sock, int target_sock, SSL *client_ssl_socks5, long
 #ifdef _DEBUG
 						printf("[E] SSL_write error:%d:%s.\n", err, ERR_error_string(ERR_peek_last_error(), NULL));
 #endif
+						free(buffer);
 						return -2;
 					}
 				}
-			}else{
-				break;
 			}
 		}
 	}
 	
+	free(buffer);
 	return 0;
 }
 
