@@ -738,6 +738,7 @@ int forwarder_aes(int client_sock, int target_sock, unsigned char *aes_key, unsi
 {
 	int rec, sen;
 	int len = 0;
+	int recv_length = 0;
 	int send_length = 0;
 	fd_set readfds;
 	int nfds = -1;
@@ -769,76 +770,102 @@ int forwarder_aes(int client_sock, int target_sock, unsigned char *aes_key, unsi
 			bzero(buffer, BUFFER_SIZE*2);
 			bzero(buffer2, BUFFER_SIZE*2);
 			
-			if((rec = recv(client_sock, buffer, 16, 0)) > 0){	// unsigned char encrypt_data_length[16]
-				if(rec != 16){
-					break;
-				}
-				
-				ret = decrypt_aes((unsigned char *)buffer, 16, aes_key, aes_iv, tmp);
-				if(ret != 4){	// int encrypt_data_length
-					free(tmp);
-					free(data);
-					free(buffer);
-					free(buffer2);
-					return -1;
-				}
-				
-				encrypt_data_length = (tmp[0] << 24)|(tmp[1] << 16)|(tmp[2] << 8)|(tmp[3]);
-				if(encrypt_data_length <= 0 || encrypt_data_length > BUFFER_SIZE*2 || (encrypt_data_length & 0xf) != 0){
-					free(tmp);
-					free(data);
-					free(buffer);
-					free(buffer2);
-					return -1;
-				}
-				
-				bzero(buffer, BUFFER_SIZE*2);
-				
-				if((rec = recv(client_sock, buffer, encrypt_data_length, 0)) > 0){
-					if(rec != encrypt_data_length){
+			len = 16;
+			recv_length = 0;
+
+			while(len > 0){
+				rec = recv(client_sock, (unsigned char *)buffer+recv_length, len, 0);	// unsigned char encrypt_data_length[16]
+				if(rec <= 0){
+					if(errno == EINTR){
+						continue;
+					}else if(errno == EAGAIN){
+						usleep(5000);
+						continue;
+					}else{
 						free(tmp);
 						free(data);
 						free(buffer);
 						free(buffer2);
 						return -1;
 					}
-					
-					ret = decrypt_aes((unsigned char *)buffer, encrypt_data_length, aes_key, aes_iv, buffer2);
-					if(ret < 0){
+				}
+				recv_length += rec;
+				len -= rec;
+			}
+
+			ret = decrypt_aes((unsigned char *)buffer, 16, aes_key, aes_iv, tmp);
+			if(ret != 4){	// int encrypt_data_length
+				free(tmp);
+				free(data);
+				free(buffer);
+				free(buffer2);
+				return -1;
+			}
+
+			encrypt_data_length = (tmp[0] << 24)|(tmp[1] << 16)|(tmp[2] << 8)|(tmp[3]);
+
+			if(encrypt_data_length <= 0 || encrypt_data_length > BUFFER_SIZE*2 || (encrypt_data_length & 0xf) != 0){
+				free(tmp);
+				free(data);
+				free(buffer);
+				free(buffer2);
+				return -1;
+			}
+				
+			bzero(buffer, BUFFER_SIZE*2);
+			len = encrypt_data_length;
+			recv_length = 0;
+
+			while(len > 0){
+				rec = recv(client_sock, (unsigned char *)buffer+recv_length, len, 0);
+				if(rec <= 0){
+					if(errno == EINTR){
+						continue;
+					}else if(errno == EAGAIN){
+						usleep(5000);
+						continue;
+					}else{
 						free(tmp);
 						free(data);
 						free(buffer);
 						free(buffer2);
 						return -1;
 					}
-					
-					len = ret;
-					send_length = 0;
-					
-					while(len > 0){
-						sen = send(target_sock, buffer2+send_length, len, 0);
-						if(sen <= 0){
-							if(errno == EINTR){
-								continue;
-							}else if(errno == EAGAIN){
-								usleep(5000);
-								continue;
-							}else{
-								free(tmp);
-								free(data);
-								free(buffer);
-								free(buffer2);
-								return -1;
-							}
-						}
-						send_length += sen;
-						len -= sen;
-					}
-				}else{
-					break;
 				}
-			}else{
-				break;
+				recv_length += rec;
+				len -= rec;
+			}
+
+			ret = decrypt_aes((unsigned char *)buffer, encrypt_data_length, aes_key, aes_iv, buffer2);
+			if(ret < 0){
+				free(tmp);
+				free(data);
+				free(buffer);
+				free(buffer2);
+				return -1;
+			}
+
+			len = ret;
+			send_length = 0;
+
+			while(len > 0){
+				sen = send(target_sock, (unsigned char *)buffer2+send_length, len, 0);
+				if(sen <= 0){
+					if(errno == EINTR){
+						continue;
+					}else if(errno == EAGAIN){
+						usleep(5000);
+						continue;
+					}else{
+						free(tmp);
+						free(data);
+						free(buffer);
+						free(buffer2);
+						return -1;
+					}
+				}
+				send_length += sen;
+				len -= sen;
 			}
 		}
 		
@@ -847,7 +874,21 @@ int forwarder_aes(int client_sock, int target_sock, unsigned char *aes_key, unsi
 			bzero(data, sizeof(struct send_recv_data_aes));
 			bzero(buffer, BUFFER_SIZE*2);
 			
-			if((rec = recv(target_sock, buffer, BUFFER_SIZE, 0)) > 0){
+			rec = recv(target_sock, buffer, BUFFER_SIZE, 0);
+			if(rec <= 0){
+				if(errno == EINTR){
+					continue;
+				}else if(errno == EAGAIN){
+					usleep(5000);
+					continue;
+				}else{
+					free(tmp);
+					free(data);
+					free(buffer);
+					free(buffer2);
+					return -1;
+				}
+			}else{
 				ret = encrypt_aes((unsigned char *)buffer, rec, aes_key, aes_iv, data->encrypt_data);
 				if(ret > 0){
 					encrypt_data_length = ret;
@@ -895,8 +936,6 @@ int forwarder_aes(int client_sock, int target_sock, unsigned char *aes_key, unsi
 					send_length += sen;
 					len -= sen;
 				}
-			}else{
-				break;
 			}
 		}
 	}
