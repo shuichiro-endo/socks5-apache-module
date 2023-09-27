@@ -2050,7 +2050,7 @@ int worker(void *ptr)
 }
 
 
-int ssl_sccept_non_blocking(int sock, SSL *ssl, long tv_sec, long tv_usec)
+int ssl_accept_non_blocking(int sock, SSL *ssl, long tv_sec, long tv_usec)
 {
 	fd_set readfds;
 	fd_set writefds;
@@ -2088,7 +2088,7 @@ int ssl_sccept_non_blocking(int sock, SSL *ssl, long tv_sec, long tv_usec)
 		
 		if(select(nfds, &readfds, &writefds, NULL, &tv) == 0){
 #ifdef _DEBUG
-			printf("[I] ssl_sccept_non_blocking select timeout.\n");
+			printf("[I] ssl_accept_non_blocking select timeout.\n");
 #endif
 			// blocking
 			flags = fcntl(sock, F_GETFL, 0);
@@ -2130,7 +2130,7 @@ int ssl_sccept_non_blocking(int sock, SSL *ssl, long tv_sec, long tv_usec)
 		t = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);	// microsecond
 		if(t >= (tv_sec * 1000000 + tv_usec)){
 #ifdef _DEBUG
-			printf("[I] ssl_sccept_non_blocking timeout.\n");
+			printf("[I] ssl_accept_non_blocking timeout.\n");
 #endif
 			// blocking
 			flags = fcntl(sock, F_GETFL, 0);
@@ -2393,7 +2393,7 @@ static int socks5_post_read_request(request_rec *r)
 #ifdef _DEBUG
 			printf("[I] Try Socks5 over TLS connection. (SSL_accept)\n");
 #endif
-			ret = ssl_sccept_non_blocking(client_sock, client_ssl_socks5, tv_sec, tv_usec);
+			ret = ssl_accept_non_blocking(client_sock, client_ssl_socks5, tv_sec, tv_usec);
 			if(ret == -2){
 #ifdef _DEBUG
 				printf("[E] SSL_accept error.\n");

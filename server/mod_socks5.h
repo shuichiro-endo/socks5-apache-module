@@ -22,7 +22,7 @@ int send_socks_response_ipv4_tls(int client_sock, SSL *client_ssl, char ver, cha
 int send_socks_response_ipv6(int client_sock, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
 int send_socks_response_ipv6_aes(int client_sock, char ver, char req, char rsv, char atyp, unsigned char *aes_key, unsigned char *aes_iv, long tv_sec, long tv_usec);
 int send_socks_response_ipv6_tls(int client_sock, SSL *client_ssl, char ver, char req, char rsv, char atyp, long tv_sec, long tv_usec);
-int ssl_sccept_non_blocking(int sock, SSL *ssl, long tv_sec, long tv_usec);
+int ssl_accept_non_blocking(int sock, SSL *ssl, long tv_sec, long tv_usec);
 void close_socket(int sock);
 int worker(void *ptr);
 
