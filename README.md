@@ -6,8 +6,8 @@ This module hides socks5 proxy in an http server.
 
 This supports CONNECT of the socks5 command only. (BIND and UDP ASSOCIATE are not available.)
 
-This is the Apahce module.
-Click [here](https://github.com/shuichiro-endo/socks5-nginx-module) for the NGINX module.
+This is the Apache module.
+Click [here](https://github.com/shuichiro-endo/socks5-nginx-module) for the Nginx module.
 
 ## How it works
 ```mermaid
