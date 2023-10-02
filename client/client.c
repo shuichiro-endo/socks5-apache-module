@@ -61,7 +61,7 @@ char *forward_proxy_password = NULL;
 int https_flag = 0;		// 0:http 1:https
 int socks5_over_tls_flag = 0;	// 0:socks5 over aes 1:socks5 over tls
 int forward_proxy_flag = 0;		// 0:no 1:http
-int forward_proxy_authorization_flag = 0;	// 0:no 1:basic
+int forward_proxy_authentication_flag = 0;	// 0:no 1:basic
 
 char server_certificate_filename_https[256] = "server_https.crt";	// server certificate filename (HTTPS)
 char server_certificate_file_directory_path_https[256] = ".";	// server certificate file directory path (HTTPS)
@@ -1472,7 +1472,7 @@ int worker(void *ptr)
 #endif
 
 
-		if(forward_proxy_authorization_flag == 1){	// forward proxy authorization: basic
+		if(forward_proxy_authentication_flag == 1){	// forward proxy authentication: basic
 			if(strlen(forward_proxy_username) > 256 || strlen(forward_proxy_password) > 256){
 #ifdef _DEBUG
 				printf("[E] Forward proxy username or password length is too long (length > 256).\n");
@@ -1494,7 +1494,7 @@ int worker(void *ptr)
 
 		bzero(http_request, BUFFER_SIZE+1);
 		if(https_flag == 0){	// http (target socks5 server)
-			if(forward_proxy_authorization_flag == 0){	// forward proxy authorization: no
+			if(forward_proxy_authentication_flag == 0){	// forward proxy authentication: no
 //				http_request_length = snprintf(http_request, BUFFER_SIZE+1, "GET http://%s:%s/ HTTP/1.1\r\nHost: %s:%s\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246\r\nAccept: */*\r\nProxy-Connection: Keep-Alive\r\n\r\n", target_domainname, target_port_number, target_domainname, target_port_number);
 
 				http_request_length = snprintf(http_request, BUFFER_SIZE+1, "CONNECT %s:%s HTTP/1.1\r\nHost: %s:%s\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246\r\nAccept: */*\r\nProxy-Connection: Keep-Alive\r\n\r\n", target_domainname, target_port_number, target_domainname, target_port_number);
@@ -1536,7 +1536,7 @@ int worker(void *ptr)
 					close_socket(client_sock);
 					return -1;
 				}
-			}else if(forward_proxy_authorization_flag == 1){	// forward proxy authorization: basic
+			}else if(forward_proxy_authentication_flag == 1){	// forward proxy authentication: basic
 //				http_request_length = snprintf(http_request, BUFFER_SIZE+1, "GET http://%s:%s/ HTTP/1.1\r\nHost: %s:%s\r\nProxy-Authorization: Basic %s\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246\r\nAccept: */*\r\nProxy-Connection: Keep-Alive\r\n\r\n", target_domainname, target_port_number, target_domainname, target_port_number, proxy_b64_credential);
 
 				http_request_length = snprintf(http_request, BUFFER_SIZE+1, "CONNECT %s:%s HTTP/1.1\r\nHost: %s:%s\r\nProxy-Authorization: Basic %s\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246\r\nAccept: */*\r\nProxy-Connection: Keep-Alive\r\n\r\n", target_domainname, target_port_number, target_domainname, target_port_number, proxy_b64_credential);
@@ -1587,7 +1587,7 @@ int worker(void *ptr)
 				return -1;
 			}
 		}else{	// https (target socks5 server)
-			if(forward_proxy_authorization_flag == 0){	// forward proxy authorization: no
+			if(forward_proxy_authentication_flag == 0){	// forward proxy authentication: no
 				http_request_length = snprintf(http_request, BUFFER_SIZE+1, "CONNECT %s:%s HTTP/1.1\r\nHost: %s:%s\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246\r\nAccept: */*\r\nProxy-Connection: Keep-Alive\r\n\r\n", target_domainname, target_port_number, target_domainname, target_port_number);
 
 				// HTTP Request
@@ -1627,7 +1627,7 @@ int worker(void *ptr)
 					close_socket(client_sock);
 					return -1;
 				}
-			}else if(forward_proxy_authorization_flag == 1){	// forward proxy authorization: basic
+			}else if(forward_proxy_authentication_flag == 1){	// forward proxy authentication: basic
 				http_request_length = snprintf(http_request, BUFFER_SIZE+1, "CONNECT %s:%s HTTP/1.1\r\nHost: %s:%s\r\nProxy-Authorization: Basic %s\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246\r\nAccept: */*\r\nProxy-Connection: Keep-Alive\r\n\r\n", target_domainname, target_port_number, target_domainname, target_port_number, proxy_b64_credential);
 
 				// HTTP Request
@@ -2423,7 +2423,7 @@ void usage(char *filename)
 	printf("usage   : %s -h listen_ip -p listen_port -H target_socks5server_domainname -P target_socks5server_port\n", filename);
 	printf("          [-s (target socks5 server https connection)] [-t (Socks5 over TLS)]\n");
 	printf("          [-A recv/send tv_sec(timeout 0-10 sec)] [-B recv/send tv_usec(timeout 0-1000000 microsec)] [-C forwarder tv_sec(timeout 0-300 sec)] [-D forwarder tv_usec(timeout 0-1000000 microsec)]\n");
-	printf("          [-a forward proxy domainname] [-b forward proxy port] [-c forward proxy(1:http)] [-d forward proxy username] [-e forward proxy password] [-f forward proxy authorization(1:basic)]\n");
+	printf("          [-a forward proxy domainname] [-b forward proxy port] [-c forward proxy(1:http)] [-d forward proxy username] [-e forward proxy password] [-f forward proxy authentication(1:basic)]\n");
 	printf("example : %s -h 0.0.0.0 -p 9050 -H 192.168.0.10 -P 80\n", filename);
 	printf("        : %s -h 0.0.0.0 -p 9050 -H foobar.test -P 80 -t\n", filename);
 	printf("        : %s -h 0.0.0.0 -p 9050 -H foobar.test -P 80 -t -A 3 -B 0 -C 3 -D 0\n", filename);
@@ -2507,7 +2507,7 @@ int main(int argc, char **argv)
 			break;
 
 		case 'f':
-			forward_proxy_authorization_flag = atoi(optarg);
+			forward_proxy_authentication_flag = atoi(optarg);
 			break;
 
 		default:
@@ -2547,7 +2547,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if(forward_proxy_authorization_flag < 0 && forward_proxy_authorization_flag > 1){
+	if(forward_proxy_authentication_flag < 0 && forward_proxy_authentication_flag > 1){
 		usage(argv[0]);
 		exit(1);
 	}
@@ -2558,15 +2558,15 @@ int main(int argc, char **argv)
 		printf("[I] Forward proxy:off\n");
 #endif
 	}else if(forward_proxy_flag == 1){	// http proxy
-		if(forward_proxy_authorization_flag == 0){
+		if(forward_proxy_authentication_flag == 0){
 #ifdef _DEBUG
 			printf("[I] Forward proxy connection:http\n");
-			printf("[I] Forward proxy authorization:no\n");
+			printf("[I] Forward proxy authentication:no\n");
 #endif
-		}else if(forward_proxy_authorization_flag == 1){
+		}else if(forward_proxy_authentication_flag == 1){
 #ifdef _DEBUG
 			printf("[I] Forward proxy connection:http\n");
-			printf("[I] Forward proxy authorization:basic\n");
+			printf("[I] Forward proxy authentication:basic\n");
 #endif
 		}
 	}else{
