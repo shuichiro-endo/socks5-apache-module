@@ -3686,10 +3686,17 @@ int worker(void *ptr)
 #ifdef _DEBUG
 					printf("[E] Forward proxy error:\n%s\n", buffer);
 #endif
+					free(ntlm);
+					free(ntlm_b64);
+					free(ntlm_challenge_message);
 					close_socket(forward_proxy_sock);
 					close_socket(client_sock);
 					return -1;
 				}
+
+				free(ntlm);
+				free(ntlm_b64);
+				free(ntlm_challenge_message);
 			}else{
 #ifdef _DEBUG
 				printf("[E] Not implemented.\n");
@@ -4142,10 +4149,17 @@ int worker(void *ptr)
 #ifdef _DEBUG
 					printf("[E] Forward proxy error:\n%s\n", buffer);
 #endif
+					free(ntlm);
+					free(ntlm_b64);
+					free(ntlm_challenge_message);
 					close_socket(forward_proxy_sock);
 					close_socket(client_sock);
 					return -1;
 				}
+
+				free(ntlm);
+				free(ntlm_b64);
+				free(ntlm_challenge_message);
 			}else{
 #ifdef _DEBUG
 				printf("[E] Not implemented.\n");
