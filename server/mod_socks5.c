@@ -2337,7 +2337,7 @@ static int socks5_post_read_request(request_rec *r)
 		printf("[I] Socks5 start.\n");
 #endif
 		
-		if(tv_sec < 0 || tv_sec > 10 || tv_usec < 0 || tv_usec > 1000000){
+		if(tv_sec < 0 || tv_sec > 60 || tv_usec < 0 || tv_usec > 1000000){
 			tv_sec = 3;
 			tv_usec = 0;
 		}else if(tv_sec == 0 && tv_usec == 0){
