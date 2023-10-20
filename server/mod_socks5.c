@@ -2249,7 +2249,7 @@ static int socks5_post_read_request(request_rec *r)
 	int i = 0;
 	int socks5_flag = 0;
 	
-	extern module core_module;
+	module core_module;
 	apr_socket_t *client_socket;
 	int client_sock = -1;
 	int ret = 0;
@@ -2360,6 +2360,17 @@ static int socks5_post_read_request(request_rec *r)
 		client_socket = ap_get_module_config(r->connection->conn_config, &core_module);
 		if(client_socket){
 			client_sock = client_socket->socketdes;
+			if(client_sock <= 0){
+#ifdef _DEBUG
+				printf("[E] client_sock error\n");
+#endif
+				return DECLINED;
+			}
+		}else{
+#ifdef _DEBUG
+			printf("[E] client_socket error\n");
+#endif
+			return DECLINED;
 		}
 
 		enable_blocking_socket(client_sock);	// blocking
